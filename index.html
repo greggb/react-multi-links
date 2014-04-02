@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv='Content-type' content='text/html; charset=utf-8'>
+    <title>Multi links with React</title>
+    <style>
+        body {
+          font-family: sans-serif;
+          font-size: 15px;
+          line-height: 1.6;
+          margin: 0;
+          padding: 20px;
+        }
+        a {
+          color: #0070C9;
+          text-decoration: none;
+        }
+        .is-selected {
+            color: #f30;
+        }
+        ul,
+        li {
+            list-style: none;
+            padding-left: 0;
+        }
+        .filter-list-menu {
+            display: inline-block;
+            margin: 0 2%;
+            vertical-align: top;
+            width: 21%;
+        }
+        .filter-list-menu a,
+        .filter-menu-subtitle {
+            border-bottom: 1px solid #e1e1e1;
+            display: block;
+            overflow: hidden;
+            padding: 5px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .filter-list-menu a:hover,
+        .is-selected {
+            background-color: #0070C9;
+            color: #fff;
+        }
+        .filter-list-swatch {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Multi links with React</h1>
+    <div id="container"></div>
+
+    <!-- Start Scripts -->
+    <script src="bower_components/react/react.js"></script>
+    <script src="bower_components/react/JSXTransformer.js"></script>
+    <script type="text/jsx">
+          /**
+           * @jsx React.DOM
+           */
+
+       var filters = [
+            [{subtitle: "Names"}, {title: "Gregg", type: "name"}, {title: "Mulder", type: "name"}, {title: "Joe Bob", type: "name"}, {title: "Skippy McGee", type: "name"}, {title: "Howard", type: "name"}, {title: "Raj", type: "name"}, {title: "Penny", type: "name"}, {title: "Sheldon", type: "name"}, {title: "Amy", type: "name"}],
+            [{subtitle: "Places"}, {title: "Seattle", type: "place"}, {title: "New York", type: "place"}, {title: "Phoenix", type: "place"}, {title: "Santa Fe", type: "place"}, {title: "Plattsburgh", type: "place"}, {title: "Morristown", type: "place"}],
+            [{subtitle: "Weather"}, {title: "Rainy", type: "weather"}, {title: "Cloudy", type: "weather"}, {title: "Extra rainy", type: "weather"}],
+            [{subtitle: "Colors"}, {title: "Blue", type: "color", color: "#0d8df4"}, {title: "Pink", type: "color", color: "#f26d93"}, {title: "Brown", type: "color", color: "#a35f36"}, {title: "Gray", type: "color", color: "#999999"}, {title: "Purple", type: "color", color: "#bb71dd"}, {title: "Yellow", type: "color", color: "#ffd540"}, {title: "Black", type: "color", color: "#2c2c2c"}, {title: "Orange", type: "color", color: "#ff8700"}, {title: "Green", type: "color", color: "#94b62d"}, {title: "White", type: "color", color: "#eeeeee"}, {title: "Tan", type: "color", color: "#d1a64f"}, {title: "Red", type: "color", color: "#ff3d00"}]
+        ];
+        var selectedFilters = {name: "", place: "", weather: "", color: ""};
+        var renderFilter = function () {
+            React.renderComponent(
+              <FilterMenu data={filters} />,
+              document.getElementById('container')
+              );
+        };
+        /*
+
+         */
+       var FilterLink = React.createClass({
+            selectFilter: function (e) {
+                e.preventDefault();
+                if (this.props.filter.title===selectedFilters[this.props.filter.type]) { selectedFilters[this.props.filter.type] = ""; }
+                else {selectedFilters[this.props.filter.type] = this.props.filter.title;}
+                renderFilter();
+            },
+
+            getFullLink: function () {
+                var fullLink = "",
+                    searchText = "",
+                    value, key;
+                for (key in selectedFilters) {
+                    value = selectedFilters[key];
+                    if (key === "text" && value){ searchText = "?searchText="+selectedFilters[key]; }
+                    else if (key === this.props.filter.type){
+                        if (value !== this.props.filter.title) {
+                            fullLink+=this.props.filter.title+" "
+                        }
+                    }
+                    else if (value) {fullLink+=selectedFilters[key]+" "}
+                }
+                fullLink = fullLink.trim();
+                fullLink = fullLink && "/siteroot/"+fullLink+"/"
+                return fullLink.replace(/\s+/g, '-').toLowerCase()+searchText;
+            },
+
+            getFilterItem: function () {
+                var color = this.props.filter.color && <ColorSwatch color={this.props.filter.color} />;
+                if (this.props.filter.subtitle) {
+                    return <span className={"filter-menu-subtitle"}><strong>{this.props.filter.subtitle}</strong></span>;
+                }
+                return <a className={selectedFilters[this.props.filter.type] === this.props.filter.title ? "is-selected" : ""} href={this.getFullLink()} onClick={this.selectFilter}>{this.props.filter.title}{color}</a>;
+            },
+
+            render: function () {
+                var filterItem = this.getFilterItem();
+                return (<li>{filterItem}</li>);
+            }
+        });
+        /*
+
+         */
+        var ColorSwatch = React.createClass({
+            render: function() {
+                var styles = {
+                        backgroundColor: this.props.color
+                    }
+                return (<span style={styles} className={"filter-list-swatch"}/>);
+            }
+        });
+        /*
+
+         */
+        /*
+            Manually render
+         */
+        var ReRenderButton = React.createClass({
+            rerender: function () {
+                renderFilter();
+            },
+            render: function() {
+                return (<button onClick={this.rerender}>re render</button>);
+          }
+        });
+        /*
+
+         */
+        var FilterColumn = React.createClass({
+            render: function() {
+                var link = this.props.column
+                .map(function (link, index) {
+                  return <FilterLink key={index} filter={link} />;
+              });
+                return (<ul>{link}</ul>);
+          }
+        });
+        /*
+
+         */
+        var FilterMenu = React.createClass({
+            render: function() {
+                console.log("render");
+                var menus = this.props.data.map(function (menu, index){
+                    return (
+                        <li key={index} className={"filter-list-menu"}>
+                            <ul>
+                                <li><FilterColumn column={menu} /></li>
+                            </ul>
+                        </li>
+                    );
+                });
+                return (
+                    <ul className={"filter-list"}>
+                    <li><ReRenderButton /></li>
+                        {menus}
+                    </ul>
+                );
+            }
+        });
+        /**
+         *
+         * Initial Render
+         *
+         */
+        renderFilter();
+    </script>
+</body>
+</html>
+
