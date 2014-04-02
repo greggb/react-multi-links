@@ -1,4 +1,4 @@
-Reac Multi Links
+React Multi Links
 =================
 
 An Exercise using React to create a filterable set of links.
